@@ -1,4 +1,4 @@
-;;; hydra-utils.el -*- lexical-binding: t; -*-
+;;; hydra-macros.el -*- lexical-binding: t; -*-
 
 (eval-when-compile
   (require 'cl)
@@ -6,9 +6,9 @@
   (require 'dash)
   )
 
-(defvar hydra-utils-format-min-column 8)
+(defvar hydra-macros-format-min-column 8)
 
-(defun hydra-utils--first-char-format (text &optional index)
+(defun hydra-macros--first-char-format (text &optional index)
   (let ((index (or index 1))
         (empty "    ")
         (pad   "")
@@ -41,8 +41,8 @@
     )
   )
 
-(defun hydra-utils--format-str-len (text)
-  (max hydra-utils-format-min-column
+(defun hydra-macros--format-str-len (text)
+  (max hydra-macros-format-min-column
        (cond ((s-contains? "%" text)
               10)
              (t
@@ -51,9 +51,9 @@
   )
 
 ;;;###autoload
-(defun hydra-utils-format-columns (&rest columns)
+(defun hydra-macros-format-columns (&rest columns)
   " format a bunch of lists of symbols into a hydra doc string
-    place in a (format %s (hydra-utils-format-columns ....))
+    place in a (format %s (hydra-macros-format-columns ....))
 
 format rules:
 blank (symbol) -> ' '
@@ -63,7 +63,7 @@ s_y_mbol       -> s_ymbol
 |text          -> text
 text           -> _t_ext
  "
-  (let* ((fmt (mapcar (-partial #'mapcar #'hydra-utils--first-char-format) columns))
+  (let* ((fmt (mapcar (-partial #'mapcar #'hydra-macros--first-char-format) columns))
          (titles (mapcar #'car columns))
          (max-row (apply #'max (mapcar #'length columns)))
          (pad-char ? )
@@ -75,7 +75,7 @@ text           -> _t_ext
          )
     (cl-loop for column in fmt
              do
-             (let* ((longest (apply #'max (mapcar #'hydra-utils--format-str-len column)))
+             (let* ((longest (apply #'max (mapcar #'hydra-macros--format-str-len column)))
                     (empty-lines (mapcar (-partial (-compose (-partial #'concat concat-str) #'make-string) longest)
                                          (make-list (max 0 (- max-row (length column))) pad-char)))
                    )
@@ -99,30 +99,30 @@ text           -> _t_ext
     )
   )
 
-(defvar hydra-utils-stack nil)
+(defvar hydra-macros-stack nil)
 
 ;;;###autoload
-(defun hydra-utils-doc (var)
+(defun hydra-macros-doc (var)
   (if var 1 0)
   )
 
 ;;;###autoload
-(defun hydra-utils-push (func)
-  (push func hydra-utils-stack)
+(defun hydra-macros-push (func)
+  (push func hydra-macros-stack)
   )
 
 ;;;###autoload
-(defun hydra-utils-pop ()
+(defun hydra-macros-pop ()
   (interactive)
-  (when hydra-utils-stack
-    (funcall-interactively (pop hydra-utils-stack))
+  (when hydra-macros-stack
+    (funcall-interactively (pop hydra-macros-stack))
     )
   )
 
 ;;;###autoload
 (defun hydra--utils-clear ()
   (interactive)
-  (setq hydra-utils-stack nil)
+  (setq hydra-macros-stack nil)
   )
 
-(provide 'hydra-utils)
+(provide 'hydra-macros)
