@@ -1,14 +1,14 @@
 #+TITLE: JG Macros Todos
+#+STARTUP: agenda
 
 * jg-el-macros                                   :macros:
-** add readme
-** add tests
-** merge transient-macros
-** merge hydra-macros
-** modelined                                     :modeline:
+** [∅] add readme
+** [∅] add tests
+** [∅] merge transient-macros
+** [∅] merge hydra-macros
+** MAYBE modelined :modeline:
 declarative modleine macros
 https://www.gnu.org/software/emacs/manual/html_node/elisp/Mode-Line-Format.html
-*** test
 
 
 
