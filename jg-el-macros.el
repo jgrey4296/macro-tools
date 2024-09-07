@@ -8,7 +8,7 @@
 
 (require 'hydra-utils)
 (require 'transient-macros)
-
+(require 'related-files)
 
 (provide 'jg-el-macros)
 
