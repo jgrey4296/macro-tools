@@ -1,7 +1,7 @@
 ;;; hydra-macros.el -*- lexical-binding: t; -*-
 
 (eval-when-compile
-  (require 'cl)
+  (require 'cl-lib)
   (require 's)
   (require 'dash)
   )

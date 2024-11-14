@@ -2,6 +2,11 @@
 
 ;; Macros for easily building related-files functions for projectile
 ;; TODO make separate related-dired fn
+(eval-when-compile
+  (require 'cl-lib)
+  (require 'f)
+)
+
 
 (defconst related-files--symbol-separator ":")
 
@@ -47,7 +52,7 @@ files can be relative to project root, will be expanded later
       (lambda (path)
         ,(format related-files-doc-str)
         (interactive "b")
-        (let* ((path (if (bufferp path) (buffer-file-name path) (buffer-file-name (get-buffer path))))
+        (let* ((path (if (bufferp path) (buffer-file-name path) path))
                (root (projectile-project-root))
                (fbase   (f-base path))
                (fname   (f-filename path))
@@ -84,6 +89,6 @@ files can be relative to project root, will be expanded later
         )
       )
     )
-  )
+)
 
 (provide 'related-files)

@@ -1,6 +1,8 @@
 ;;; transient.el -*- lexical-binding: t; -*-
-(require 'cl-lib)
-(require 'transient)
+(eval-when-compile
+  (require 'cl-lib)
+  (require 'transient)
+  )
 
 (defconst fmt-as-bool-pair '("T" . "F"))
 

@@ -6,7 +6,7 @@
 ;; See footer for licenses/metadata/notes as applicable
 ;;-- end Header
 
-(require 'hydra-utils)
+(require 'hydra-macros)
 (require 'transient-macros)
 (require 'related-files)
 
