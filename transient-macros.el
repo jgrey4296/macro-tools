@@ -21,7 +21,6 @@
   "Prefix Subclassed to hold a description"
   )
 
-
 (cl-defmethod transient-format-description :before ((obj transient-macro--group))
   "Format the description by calling the next method.  If the result
 is nil, then use \"(BUG: no description)\" as the description.
@@ -30,6 +29,13 @@ If the OBJ's `key' is currently unreachable, then apply the face
   (or (funcall (oref obj description))
       (propertize "(JG BUG: no description)" 'face 'error))
 )
+
+;;;###autoload
+(defun transient-simple-formatter (name key)
+  (format "%s  : %s"
+          (make-string (max 0 (- 3 (length key))) 32)
+          name)
+  )
 
 ;;;###autoload
 (defun transient-title-mode-formatter (name mode key)
@@ -48,7 +54,6 @@ If the OBJ's `key' is currently unreachable, then apply the face
           name
           )
   )
-
 
 ;;;###autoload
 (defun fmt-as-bool! (arg)
