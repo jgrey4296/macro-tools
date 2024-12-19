@@ -81,9 +81,10 @@ If the OBJ's `key' is currently unreachable, then apply the face
             arg)
   )
 
-;;;###autoload
+;;;###autoload (autoload 'transient-make-mode-toggle! "transient-macros" nil nil t)
 (defmacro transient-make-mode-toggle! (mode &optional desc key heading mode-var)
   " Macro to define a transient suffix for toggling a mode easier "
+  (declare (indent defun))
   (let* ((fullname (intern (format "transient-macro-toggle-%s" (symbol-name mode))))
          (name (let ((str (or desc (symbol-name mode))))
                  (when heading
@@ -105,9 +106,10 @@ If the OBJ's `key' is currently unreachable, then apply the face
      )
   )
 
-;;;###autoload
+;;;###autoload (autoload 'transient-make-var-toggle! "transient-macros" nil nil t)
 (defmacro transient-make-var-toggle! (name var &optional desc key)
   " Macro to define a transient suffix for toggling a bool variable "
+  (declare (indent defun))
   (let* ((fullname (intern (format "transient-macro-toggle-%s" (symbol-name name))))
          (desc-fn `(lambda () (transient-title-var-formatter ,(or desc (symbol-name name)) ,var ,key)))
          )
@@ -125,11 +127,12 @@ If the OBJ's `key' is currently unreachable, then apply the face
     )
 )
 
-;;;###autoload
+;;;###autoload (autoload 'transient-make-call! "transient-macros" nil nil t)
 (cl-defmacro transient-make-call! (name key fmt &body body)
   " create a transient suffix of `name`
 with a string or format call, which executes the body
  "
+  (declare (indent defun))
   (let ((fullname (intern (format "transient-macro-call-%s" (if (stringp name) name
                                                            (symbol-name name)))))
         (transient (if (plist-member body :transient) (plist-get body :transient) t))
@@ -154,11 +157,12 @@ with a string or format call, which executes the body
     )
   )
 
-;;;###autoload
+;;;###autoload (autoload 'transient-make-int-call! "transient-macros" nil nil t)
 (cl-defmacro transient-make-int-call! (name key fmt &body body)
   " create a transient suffix of `name`
 with a string or format call, interactively calls the fn symbol in body
  "
+  (declare (indent defun))
   (let ((fullname (intern (format "transient-macro-call-%s" (if (stringp name) name
                                                            (symbol-name name)))))
         (transient (if (plist-member body :transient) (plist-get body :transient) t))
@@ -180,13 +184,14 @@ with a string or format call, interactively calls the fn symbol in body
     )
   )
 
-;;;###autoload
+;;;###autoload (autoload 'transient-make-subgroup! "transient-macros" nil nil t)
 (cl-defmacro transient-make-subgroup! (name bind docstring &body body &key (desc nil) &allow-other-keys)
   " Make prefix subgroup bound to const `name`, as the triple (keybind descr prefix-call),
 which can then be included in other transient-prefixes as just `name`
 with text properties to mark it so
 '
  "
+  (declare (indent defun))
   (let ((prefix (gensym))
         (docfn (gensym))
         (doc (pcase (or desc (symbol-name name))
