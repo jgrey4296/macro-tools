@@ -6,7 +6,13 @@
 ;;
 ;;-- end Header
 
+(eval-when-compile
+  (require 's)
+  )
 
+(defconst jg-misc-macros-fmt-as-bool-pair '("T" . "F"))
+
+;;;###autoload
 (defun unquote! (val)
   "Generalized unquoting function
   Does not recursively unquote.
@@ -18,6 +24,7 @@
     )
   )
 
+;;;###autoload
 (defun unfun!(fn)
   "Prep handler functions by possibly evaluating them"
   (pcase fn
@@ -31,6 +38,40 @@
     (x nil)
     )
   )
+
+;;;###autoload
+(defun fmt-as-bool! (arg)
+  " pass in a value, convert it to one of the values in
+`jg-misc-macros-fmt-as-bool-pair` "
+  (if arg (car jg-misc-macros-fmt-as-bool-pair) (cdr jg-misc-macros-fmt-as-bool-pair))
+  )
+
+;;;###autoload
+(defun pop-plist-from-body! (body)
+  "macros with &key and &rest include the keys in the body,
+  (and need &allow-other-keys.
+         This strips the kwds and their values off from the body
+         "
+  (while (and body (listp body) (keywordp (car body))) (pop body) (pop body))
+  body
+  )
+
+;;;###autoload
+(defun ensure-hook! (sym)
+  "Give a symbol, get a hook name
+eg: blah -> blah-hook
+... blah-mode -> blah-mode-hook
+... blah-mode-hook -> blah-mode-hook
+"
+  (let ((symstr (symbol-name sym)))
+    (if (s-suffix? "-hook" symstr)
+        sym
+      (intern (format "%s-hook" symstr))
+      )
+    )
+  )
+
+
 (provide 'jg-misc-macros)
 
 ;;-- Footer
