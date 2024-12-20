@@ -25,7 +25,7 @@
   )
 
 ;;;###autoload
-(defun unfun!(fn)
+(defun upfun!(fn)
   "Prep handler functions by possibly evaluating them"
   (pcase fn
     ('nil nil)
@@ -63,14 +63,12 @@ eg: blah -> blah-hook
 ... blah-mode -> blah-mode-hook
 ... blah-mode-hook -> blah-mode-hook
 "
-  (let ((symstr (symbol-name sym)))
+  (let ((symstr (symbol-name (unquote! sym))))
     (if (s-suffix? "-hook" symstr)
         sym
-      (intern (format "%s-hook" symstr))
+      (intern (format "%s-hook" symstr)))
       )
     )
-  )
-
 
 (provide 'jg-misc-macros)
 

@@ -14,14 +14,18 @@
   (it "ignores non-quotes"
     (expect (unquote! 2) :to-be 2)
     (expect (unquote! (list 1 2 3 4)) :to-equal (list 1 2 3 4))
+    (expect (unquote! (quote (list 1 2 3 4))) :to-equal '(list 1 2 3 4))
     )
   (it "does basic unquoting"
-    (expect (unquote! 'blah) :to-be 'blah))
+    (expect (unquote! 'blah) :to-be (quote blah)))
   (it "unquotes functions"
-    (expect (unquote! #'blah) :to-be 'blah))
+    (expect (unquote! #'blah) :to-be (quote blah))
+    (expect (unquote! #'blah) :to-equal (quote blah))
+    )
+
 )
 
-(describe "unfun tests"
+(describe "upfun tests"
   :var (setup)
   (before-each
     (setf (symbol-function 'setup) #'(lambda (&rest data) nil))
@@ -30,21 +34,21 @@
   (it "is a sanity test" (expect t :to-be (not nil)))
   (it "should pass through function symbols"
     (expect 'setup :not :to-have-been-called)
-    (expect (unfun! #'setup) :to-be #'setup)
-    (expect (functionp (unfun! #'setup)) :to-be t)
-    (expect (unfun! (function setup)) :to-be #'setup)
-    (expect (functionp (unfun! (function setup))) :to-be t)
+    (expect (upfun! #'setup) :to-be #'setup)
+    (expect (functionp (upfun! #'setup)) :to-be t)
+    (expect (upfun! (function setup)) :to-be #'setup)
+    (expect (functionp (upfun! (function setup))) :to-be t)
     (expect 'setup :not :to-have-been-called)
     )
   (it "should reject non-function symbols"
     (expect 'setup :not :to-have-been-called)
-    (expect (unfun! 'default-directory) :to-be nil)
+    (expect (upfun! 'default-directory) :to-be nil)
     (expect 'setup :not :to-have-been-called)
     )
   (it "should eval list lambdas"
     (expect 'setup :not :to-have-been-called)
-    (expect (unfun! '(function (lambda () (setup)))) :not :to-be nil)
-    (expect (functionp (unfun! '(function (lambda () (setup))))) :to-be t)
+    (expect (upfun! '(function (lambda () (setup)))) :not :to-be nil)
+    (expect (functionp (upfun! '(function (lambda () (setup))))) :to-be t)
     (expect 'setup :not :to-have-been-called)
     )
   )
@@ -79,8 +83,12 @@
     (expect (ensure-hook! 'lsp-mode-hook) :to-be 'lsp-mode-hook)
     )
   (it "should return hook-symbols otherwise"
-    (expect (ensure-hook! 'blah) :to-be 'blah-hook)
-    (expect (ensure-hook! 'blah-mode) :to-be 'blah-mode-hook)
+    (expect (ensure-hook! 'blah)              :to-be 'blah-hook)
+    (expect (ensure-hook! (quote blah))       :to-be 'blah-hook)
+    )
+  (it "should handle x-mode symbols as well"
+    (expect (ensure-hook! 'blah-mode)         :to-be 'blah-mode-hook)
+    (expect (ensure-hook! (quote blah-mode))  :to-be 'blah-mode-hook)
     )
 )
 
