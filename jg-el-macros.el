@@ -6,6 +6,7 @@
 ;; See footer for licenses/metadata/notes as applicable
 ;;-- end Header
 
+(require 'jg-misc-macros)
 (require 'hydra-macros)
 (require 'transient-macros)
 (require 'related-files)

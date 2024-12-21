@@ -5,6 +5,7 @@
 (eval-when-compile
   (require 'cl-lib)
   (require 'f)
+  (require 'jg-misc-macros)
 )
 
 
@@ -29,6 +30,7 @@ separated by 'related-files--symbol-separator' "
   )
 
 (defmacro related-files--proj-detail! (key)
+  (declare (indent defun))
   (unless (member (unquote! key) '(project-file marker-files compilation-dir compile configure install package run src-dir test test-dir test-prefix test-suffix related-files-fn))
     (error "Bad Project Key" key))
   `(when-let ((proj (alist-get (projectile-project-type) projectile-project-types)))
@@ -46,6 +48,7 @@ root, fbase, fname, fparent, project
 
 files can be relative to project root, will be expanded later
 "
+  (declare (indent defun))
   (let ((funcname (related-files--gensym "related-files" proj-type))
         )
     `(fset (function ,funcname)

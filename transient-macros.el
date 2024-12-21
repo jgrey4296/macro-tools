@@ -2,9 +2,8 @@
 (eval-when-compile
   (require 'cl-lib)
   (require 'transient)
+  (require 'jg-misc-macros)
   )
-
-(defconst fmt-as-bool-pair '("T" . "F"))
 
 (defvar transient-quit!
   [
@@ -37,17 +36,21 @@ If the OBJ's `key' is currently unreachable, then apply the face
           name)
   )
 
+;;;###autoload (defalias 'transient-title-mode-formatter 'transient-mode-fmt)
+
 ;;;###autoload
-(defun transient-title-mode-formatter (name mode key)
+(defun transient-mode-fmt (name mode key)
   (format "%s%s : %s"
           (make-string (max 0 (- 3 (length key))) 32)
-          (fmt-as-bool! mode)
+          (fmt-as-bool! (when (boundp mode) (symbol-value mode)))
           name
           )
   )
 
+;;;###autoload (defalias 'transient-title-var-formatter 'transient-var-fmt)
+
 ;;;###autoload
-(defun transient-title-var-formatter (name val key)
+(defun transient-var-fmt (name val key)
   (format "%s%s : %s"
           (make-string (max 0 (- 3 (length key))) 32)
           (fmt-as-bool! val)
@@ -56,9 +59,18 @@ If the OBJ's `key' is currently unreachable, then apply the face
   )
 
 ;;;###autoload
-(defun fmt-as-bool! (arg)
-  " pass in a value, convert it to one of the values in `fmt-as-bool-pair` "
-  (if arg (car fmt-as-bool-pair) (cdr fmt-as-bool-pair))
+(defun transient-hook-fmt (name hook mode key)
+  (let ((mode-active (fmt-as-bool! (symbol-value mode)))
+        (spacer 32)
+        (in-hook (fmt-as-bool! (-contains? hook mode)))
+        )
+    (format "%s(%s∈%s) : %s"
+            (make-string (max 0 (- 3 (length key))) spacer)
+            mode-active
+            in-hook
+            name
+            )
+    )
   )
 
 ;;;###autoload
@@ -81,39 +93,52 @@ If the OBJ's `key' is currently unreachable, then apply the face
             arg)
   )
 
-;;;###autoload
-(defmacro transient-make-mode-toggle! (mode &optional desc key heading mode-var)
+;;;###autoload (defalias 'transient-make-mode-toggle! 'transient-toggle-mode!)
+
+;;;###autoload (autoload 'transient-toggle-mode! "transient-macros" nil nil t)
+(cl-defmacro transient-toggle-mode! (mode () docstr &key desc key heading mode-var)
   " Macro to define a transient suffix for toggling a mode easier "
+  (declare (indent defun))
   (let* ((fullname (intern (format "transient-macro-toggle-%s" (symbol-name mode))))
-         (name (let ((str (or desc (symbol-name mode))))
+         (name (let ((str (or desc docstr (symbol-name mode))))
                  (when heading
                    (put-text-property 0 (length str) 'face 'transient-heading str))
                  str))
-        (desc-fn `(lambda () (transient-title-mode-formatter ,name ,(or mode-var mode) ,key)))
-        )
+         (desc-fn `(lambda () (transient-mode-fmt
+                               ,(or desc docstr name)
+                               ,(or mode-var mode)
+                               ,key)))
+         )
     `(progn
-       (defvar ,(or mode-var mode) nil)
        (transient-define-suffix ,fullname ()
-               :transient t
-               ,@(when key (list :key key))
-               :description ,desc-fn
-               (interactive)
-               (,mode 'toggle)
-               )
+         ,docstr
+         :transient t
+         ,@(when key (list :key key))
+         :description ,desc-fn
+         (interactive)
+         (,mode 'toggle)
+         )
        (quote ,fullname)
        )
      )
   )
 
-;;;###autoload
-(defmacro transient-make-var-toggle! (name var &optional desc key)
+;;;###autoload (defalias 'transient-make-var-toggle! 'transient-toggle-var!)
+
+;;;###autoload (autoload 'transient-toggle-var! "transient-macros" nil nil t)
+(cl-defmacro transient-toggle-var! (name () docstr &key var desc key)
   " Macro to define a transient suffix for toggling a bool variable "
+  (declare (indent defun))
   (let* ((fullname (intern (format "transient-macro-toggle-%s" (symbol-name name))))
-         (desc-fn `(lambda () (transient-title-var-formatter ,(or desc (symbol-name name)) ,var ,key)))
+         (desc-fn `(lambda () (transient-var-fmt
+                               ,(or desc docstr (symbol-name name))
+                               ,var
+                               ,key)))
          )
     `(progn
        (defvar ,var nil)
        (transient-define-suffix ,fullname ()
+         ,docstr
          :transient t
          :description ,desc-fn
          ,@(when key (list :key key))
@@ -125,68 +150,80 @@ If the OBJ's `key' is currently unreachable, then apply the face
     )
 )
 
-;;;###autoload
-(cl-defmacro transient-make-call! (name key fmt &body body)
-  " create a transient suffix of `name`
-with a string or format call, which executes the body
- "
-  (let ((fullname (intern (format "transient-macro-call-%s" (if (stringp name) name
-                                                           (symbol-name name)))))
-        (transient (if (plist-member body :transient) (plist-get body :transient) t))
-        (no-curr-buff (if (plist-member body :no-curr) (plist-get body :no-curr) nil))
-        )
-    (while (keywordp (car body))
-      (pop body) (pop body))
-    `(progn
-       (transient-define-suffix ,fullname ()
-         :transient ,transient
-         ,@(when key (list :key key))
-         :description (lambda () ,fmt)
-         (interactive)
-         ,@(if no-curr-buff
-               body
-             `((with-current-buffer (or transient--original-buffer (current-buffer))
-                ,@body
-                )))
+;;;###autoload (autoload 'transient-toggle-hook! "transient-macros" nil nil t)
+(cl-defmacro transient-toggle-hook! (name () docstr &key desc key hook fn)
+  "Make a transient toggle to add/remove `fn' to/from `hook'"
+  (declare (indent defun))
+  (let* ((fullname (intern (format "transient-macro-toggle-hook-%s" name)))
+         (hook-target (ensure-hook! (unquote! hook)))
+         (fn-target (unquote! fn))
+         (desc-fn `(lambda () (transient-hook-fmt ,(or desc docstr (symbol-name name))
+                                                  ,hook-target
+                                                  ,fn-target
+                                                  ,key)))
          )
-       (quote ,fullname)
-       )
-    )
-  )
-
-;;;###autoload
-(cl-defmacro transient-make-int-call! (name key fmt &body body)
-  " create a transient suffix of `name`
-with a string or format call, interactively calls the fn symbol in body
- "
-  (let ((fullname (intern (format "transient-macro-call-%s" (if (stringp name) name
-                                                           (symbol-name name)))))
-        (transient (if (plist-member body :transient) (plist-get body :transient) t))
-        )
-    (while (keywordp (car body))
-      (pop body) (pop body))
     `(progn
-       (transient-define-suffix ,fullname ()
-         :transient ,transient
+       (transient-define-suffix ,fullname (arg)
+         ,docstr
+         :transient t
+         :description ,desc-fn
          ,@(when key (list :key key))
-         :description (lambda () ,fmt)
-         (interactive)
-         (with-current-buffer (or transient--original-buffer (current-buffer))
-           (call-interactively ,@body)
+         (interactive "P")
+         (if arg
+             (funcall ,fn 'toggle)
+           (if (not (-contains? ,hook-target ,fn))
+               (add-hook (quote ,hook-target) ,fn)
+             (remove-hook (quote ,hook-target) ,fn)
+             (funcall ,fn -1))
            )
          )
        (quote ,fullname)
        )
     )
+)
+
+;;;###autoload (defalias 'transient-make-call! 'transient-call!)
+;;;###autoload (autoload 'transient-call! "transient-macros" nil nil t)
+(cl-defmacro transient-call! (name () docstr &body body &key key desc interactive (transient t) no-buff &allow-other-keys)
+  " create a transient suffix of `name`
+with a string or format call, which executes the body
+ "
+  (declare (indent defun))
+  (let* ((fullname (intern (format "transient-macro-call-%s" (if (stringp name) name
+                                                           (symbol-name name)))))
+         (clean-body (pop-plist-from-body! body))
+         (body-call (if interactive
+                        `((call-interactively ,@clean-body))
+                      clean-body))
+         (wrapped-call (if no-buff
+                           body-call
+                         `((with-current-buffer (or transient--original-buffer
+                                                   (current-buffer))
+                            ,@body-call))))
+        )
+    `(progn
+       (transient-define-suffix ,fullname ()
+         ,docstr
+         :transient ,transient
+         ,@(when key (list :key key))
+         :description (lambda () ,(or desc docstr name))
+         (interactive)
+         ,@wrapped-call
+         )
+       (quote ,fullname)
+       )
+    )
   )
 
-;;;###autoload
-(cl-defmacro transient-make-subgroup! (name bind docstring &body body &key (desc nil) &allow-other-keys)
+;;;###autoload (defalias 'transient-make-subgroup! 'transient-subgroup!)
+;;;###autoload (autoload 'transient-subgroup! "transient-macros" nil nil t)
+(cl-defmacro transient-subgroup! (name () docstring &body body &key key (desc nil) &allow-other-keys)
   " Make prefix subgroup bound to const `name`, as the triple (keybind descr prefix-call),
 which can then be included in other transient-prefixes as just `name`
 with text properties to mark it so
 '
  "
+  (declare (indent defun))
   (let ((prefix (gensym))
         (docfn (gensym))
         (doc (pcase (or desc (symbol-name name))
@@ -199,18 +236,16 @@ with text properties to mark it so
                    result
                    ))
                ))
+        (clean-body (pop-plist-from-body! body))
         )
-    (when (keywordp (car body))
-      (pop body) (pop body)
-      )
     `(progn
        (transient-define-prefix ,prefix ()
          ,docstring
-         ,@body
+         ,@clean-body
          transient-quit!
          )
        (defun ,docfn nil ,doc)
-       (defconst ,name (list ,bind  (quote ,docfn) (quote ,prefix)))
+       (defconst ,name (list ,key (quote ,docfn) (quote ,prefix)))
        (quote ,name)
        )
     )
