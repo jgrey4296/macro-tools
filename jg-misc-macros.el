@@ -7,6 +7,7 @@
 ;;-- end Header
 
 (eval-when-compile
+  (require 'cl-lib)
   (require 's)
   )
 

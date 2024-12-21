@@ -8,7 +8,6 @@
   (require 'jg-misc-macros)
 )
 
-
 (defconst related-files--symbol-separator ":")
 
 (defconst related-files-doc-str "Macro generated related-files-fn for projectile. ")

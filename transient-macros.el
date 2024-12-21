@@ -2,7 +2,12 @@
 (eval-when-compile
   (require 'cl-lib)
   (require 'transient)
+  (require 'eieio-core)
   (require 'jg-misc-macros)
+
+  (declare-function pop-plist-from-body! "jg-misc-macros")
+  (declare-function eieio-make-class-predicate "eieio-core")
+
   )
 
 (defvar transient-quit!
@@ -156,10 +161,9 @@ If the OBJ's `key' is currently unreachable, then apply the face
   (declare (indent defun))
   (let* ((fullname (intern (format "transient-macro-toggle-hook-%s" name)))
          (hook-target (ensure-hook! (unquote! hook)))
-         (fn-target (unquote! fn))
          (desc-fn `(lambda () (transient-hook-fmt ,(or desc docstr (symbol-name name))
                                                   ,hook-target
-                                                  ,fn-target
+                                                  ,fn
                                                   ,key)))
          )
     `(progn
