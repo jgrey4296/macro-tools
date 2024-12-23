@@ -9,9 +9,14 @@
 (eval-when-compile
   (require 'cl-lib)
   (require 's)
+  (require 'eieio-core)
+
+  (declare-function eieio-make-clas-predicate "eieio-core")
   )
 
 (defconst jg-misc-macros-fmt-as-bool-pair '("T" . "F"))
+(defconst jg-misc-macros--sym-sep "-")
+(defvar   jg-misc-macros--kwd-strs (list :example "ex"))
 
 ;;;###autoload
 (defun unquote! (val)
@@ -74,6 +79,34 @@ eg: blah -> blah-hook
       (intern (format "%s-hook" symstr)))
       )
     )
+
+;;;###autoload
+(defun gensym! (&rest names)
+  " make a newly interned symbol from the provided name strings/symbols/keywords,
+  separated by 'jg-misc-macros--sym-sep', looking up keywords in 'jg-misc-macros--kwd-strs' "
+
+  (intern (string-join
+           (-reject #'null
+                    (mapcar #'(lambda (x) (cond
+                                           ((null x) nil)
+                                           ((and (keywordp x) (plist-member jg-misc-macros--kwd-strs x))
+                                            (plist-get jg-misc-macros--kwd-strs x))
+                                           ((keywordp x) nil)
+                                           ((symbolp x)
+                                            (symbol-name x))
+                                           ((stringp x)
+                                            x)
+                                           (t nil)
+                                           )
+                                )
+                            names
+                            )
+                    )
+           jg-misc-macros--sym-sep
+           )
+          )
+  )
+
 
 (provide 'jg-misc-macros)
 
