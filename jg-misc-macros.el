@@ -27,16 +27,20 @@
 
 ;;;###autoload
 (defun upfun!(fn)
-  "Prep handler functions by possibly evaluating them"
+  " Convert a function mentioned in a macro into something callable
+
+
+ "
+  ;; todo add an autoloadp case
   (pcase fn
     ('nil nil)
-    ((and x `(function (lambda . ,_)))
+    ((pred functionp)
+     fn)
+    ((and x (or `(function . (lambda . ,_)) `(function (lambda . ,_ ))))
      (eval x))
-    ((and x `(function ,_))
-     (eval x))
-    ((and x (pred symbolp) (pred symbol-function))
-     x)
-    (x nil)
+    ((and x `(function . ,fn) (guard (functionp fn)))
+     fn)
+    (x x)
     )
   )
 

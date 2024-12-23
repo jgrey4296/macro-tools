@@ -28,8 +28,8 @@
 (describe "upfun tests"
   :var (setup)
   (before-each
-    (setf (symbol-function 'setup) #'(lambda (&rest data) nil))
-    (spy-on 'setup)
+    (setf (symbol-function 'setup) #'(lambda (&rest data) 2))
+    (spy-on 'setup :and-return-value 2)
     )
   (it "is a sanity test" (expect t :to-be (not nil)))
   (it "should pass through function symbols"
@@ -40,14 +40,15 @@
     (expect (functionp (upfun! (function setup))) :to-be t)
     (expect 'setup :not :to-have-been-called)
     )
-  (it "should reject non-function symbols"
+  (it "should ignore non-function symbols"
     (expect 'setup :not :to-have-been-called)
-    (expect (upfun! 'default-directory) :to-be nil)
+    (expect (upfun! 'default-directory) :to-be 'default-directory)
     (expect 'setup :not :to-have-been-called)
     )
   (it "should eval list lambdas"
     (expect 'setup :not :to-have-been-called)
     (expect (upfun! '(function (lambda () (setup)))) :not :to-be nil)
+    (expect (functionp (upfun! #'(lambda () (setup)))) :to-be t)
     (expect (functionp (upfun! '(function (lambda () (setup))))) :to-be t)
     (expect 'setup :not :to-have-been-called)
     )
@@ -91,8 +92,6 @@
     (expect (ensure-hook! (quote blah-mode))  :to-be 'blah-mode-hook)
     )
 )
-
-
 
 ;;-- Footer
 ;; Copyright (C) 2024 john
