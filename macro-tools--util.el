@@ -32,10 +32,7 @@
 
 ;;;###autoload
 (defun upfun!(fn)
-  " Convert a function mentioned in a macro into something callable
-
-
- "
+  " Convert a function mentioned in a macro into something callable "
   ;; todo add an autoloadp case
   (pcase fn
     ('nil nil)
@@ -43,7 +40,7 @@
      fn)
     ((and x (or `(function . (lambda . ,_)) `(function (lambda . ,_ ))))
      (eval x))
-    ((and x `(function . ,fn) (guard (functionp fn)))
+    ((and x (or `(function . ,fn) `(function . (,fn))) (guard (functionp fn)))
      fn)
     (x x)
     )
@@ -107,6 +104,15 @@ eg: blah -> blah-hook
           )
   )
 
+(defmacro file! ()
+  "Return the file of the file this macro was called. orig from doom."
+  '(or (macroexp-file-name) load-file-name buffer-file-name)
+)
+
+(defmacro dir! ()
+  "Return the directory of the file this macro was called. orig from doom."
+  '(file-name-directory (file!))
+  )
 
 (provide 'macro-tools--util)
 
