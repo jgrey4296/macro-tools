@@ -1,4 +1,4 @@
-;;; jg-misc-macros.el -*- lexical-binding: t; no-byte-compile: t; -*-
+;;; macro-tools--util.el -*- lexical-binding: t; no-byte-compile: t; -*-
 ;;-- Header
 ;; File Commentary:
 ;;
@@ -14,9 +14,9 @@
   (declare-function eieio-make-clas-predicate "eieio-core")
   )
 
-(defconst jg-misc-macros-fmt-as-bool-pair '("T" . "F"))
-(defconst jg-misc-macros--sym-sep "-")
-(defvar   jg-misc-macros--kwd-strs (list :example "ex"))
+(defconst macro-tools--util-fmt-as-bool-pair '("T" . "F"))
+(defconst macro-tools--util-sym-sep "-")
+(defvar   macro-tools--util-kwd-strs (list :example "ex"))
 
 ;;;###autoload
 (defun unquote! (val)
@@ -52,8 +52,8 @@
 ;;;###autoload
 (defun fmt-as-bool! (arg)
   " pass in a value, convert it to one of the values in
-`jg-misc-macros-fmt-as-bool-pair` "
-  (if arg (car jg-misc-macros-fmt-as-bool-pair) (cdr jg-misc-macros-fmt-as-bool-pair))
+`macro-tools--util-fmt-as-bool-pair` "
+  (if arg (car macro-tools--util-fmt-as-bool-pair) (cdr macro-tools--util-fmt-as-bool-pair))
   )
 
 ;;;###autoload
@@ -83,14 +83,14 @@ eg: blah -> blah-hook
 ;;;###autoload
 (defun gensym! (&rest names)
   " make a newly interned symbol from the provided name strings/symbols/keywords,
-  separated by 'jg-misc-macros--sym-sep', looking up keywords in 'jg-misc-macros--kwd-strs' "
+  separated by 'macro-tools--util-sym-sep', looking up keywords in 'macro-tools--util-kwd-strs' "
 
   (intern (string-join
            (-reject #'null
                     (mapcar #'(lambda (x) (cond
                                            ((null x) nil)
-                                           ((and (keywordp x) (plist-member jg-misc-macros--kwd-strs x))
-                                            (plist-get jg-misc-macros--kwd-strs x))
+                                           ((and (keywordp x) (plist-member macro-tools--util-kwd-strs x))
+                                            (plist-get macro-tools--util-kwd-strs x))
                                            ((keywordp x) nil)
                                            ((symbolp x)
                                             (symbol-name x))
@@ -102,13 +102,13 @@ eg: blah -> blah-hook
                             names
                             )
                     )
-           jg-misc-macros--sym-sep
+           macro-tools--util-sym-sep
            )
           )
   )
 
 
-(provide 'jg-misc-macros)
+(provide 'macro-tools--util)
 
 ;;-- Footer
 ;; Copyright (C) 2024 john
@@ -131,4 +131,4 @@ eg: blah -> blah-hook
 ;; ("blah-" . "blah-")
 ;; )
 ;; End:
-;;; jg-misc-macros.el ends here
+;;; macro-tools--util.el ends here

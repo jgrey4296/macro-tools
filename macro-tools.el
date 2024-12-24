@@ -1,4 +1,4 @@
-;;; jg-el-macros.el -*- lexical-binding: t; no-byte-compile: t; -*-
+;;; macro-tools.el -*- lexical-binding: t; no-byte-compile: t; -*-
 ;;-- Header
 ;; File Commentary:
 ;;
@@ -6,12 +6,12 @@
 ;; See footer for licenses/metadata/notes as applicable
 ;;-- end Header
 
-(require 'jg-misc-macros)
-(require 'hydra-macros)
-(require 'transient-macros)
-(require 'related-files)
+(require 'macro-tools--hydra)
+(require 'macro-tools--related)
+(require 'macro-tools--transient)
+(require 'macro-tools--util)
 
-(provide 'jg-el-macros)
+(provide 'macro-tools)
 
 ;;-- Footer
 ;; Copyright (C) 2024 john

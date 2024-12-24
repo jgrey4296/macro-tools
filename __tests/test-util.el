@@ -6,7 +6,7 @@
 ;;
 ;;-- end Header
 (require 'buttercup)
-(require 'jg-misc-macros)
+(require 'macro-tools--util)
 
 (describe "unquote tests"
   ;; Specs:

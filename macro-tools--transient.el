@@ -3,7 +3,7 @@
   (require 'cl-lib)
   (require 'transient)
   (require 'eieio-core)
-  (require 'jg-misc-macros)
+  (require 'macro-tools--util)
 
   (declare-function pop-plist-from-body! "jg-misc-macros")
   (declare-function eieio-make-class-predicate "eieio-core")
@@ -13,7 +13,7 @@
 (cl-assert (featurep 'transient) "transient is needed")
 (cl-assert (fboundp 'transient-prefix) "transient prefix is needed")
 
-(defvar transient-quit!
+(defvar macro-tools--transient-quit!
   [
    ""
    [("q" "Quit Local" transient-quit-one)]
@@ -23,12 +23,12 @@
   " Reusable simple quit for transients "
   )
 
-(defclass transient-macro--group (transient-prefix)
+(defclass macro-tools--transient-group (transient-prefix)
   ((description :initarg :description :initform nil))
   "Prefix Subclassed to hold a description"
   )
 
-(cl-defmethod transient-format-description :before ((obj transient-macro--group))
+(cl-defmethod macro-tools--transient-format-description :before ((obj macro-tools--transient-group))
   "Format the description by calling the next method.  If the result
 is nil, then use \"(BUG: no description)\" as the description.
 If the OBJ's `key' is currently unreachable, then apply the face
@@ -38,7 +38,7 @@ If the OBJ's `key' is currently unreachable, then apply the face
 )
 
 ;;;###autoload
-(defun transient-simple-formatter (name key)
+(defun macro-tools--transient-simple-fmt (name key)
   (format "%s  : %s"
           (make-string (max 0 (- 3 (length key))) 32)
           name)
@@ -259,7 +259,7 @@ auto-wraps the body in a vector and adds the description
          [:description ,descfn-name
           ,@clean-body
           ]
-         transient-quit!
+         macro-tools--transient-quit!
          )
        (defconst ,name
          (list
@@ -333,4 +333,4 @@ ie: (progn (build-base-transient) (run-hooks 'base-transient-addition-hook))
     )
   )
 
-(provide 'transient-macros)
+(provide 'macro-tools--transient)

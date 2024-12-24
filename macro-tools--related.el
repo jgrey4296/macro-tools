@@ -5,30 +5,15 @@
 (eval-when-compile
   (require 'cl-lib)
   (require 'f)
-  (require 'jg-misc-macros)
+  (require 'macro-tools--util)
 )
 
-(defconst related-files--symbol-separator ":")
+(defconst macro-tools--related-symbol-separator ":")
 
-(defconst related-files-doc-str "Macro generated related-files-fn for projectile. ")
+(defconst macro-tools--related-doc-str "Macro generated related-files-fn for projectile. ")
 
-(defun related-files--gensym (&rest names)
-  " make a newly interned symbol from the provided name strings/symbols,
-separated by 'related-files--symbol-separator' "
-  (intern (string-join (mapcar (lambda (x)
-                                 (cond
-                                  ((symbolp x)
-                                   (symbol-name x))
-                                  (t
-                                   x))
-                                 )
-                               names)
-                       related-files--symbol-separator
-                       )
-          )
-  )
 
-(defmacro related-files--proj-detail! (key)
+(defmacro macro-tools--related-proj-detail (key)
   (declare (indent defun))
   (unless (member (unquote! key) '(project-file marker-files compilation-dir compile configure install package run src-dir test test-dir test-prefix test-suffix related-files-fn))
     (error "Bad Project Key" key))
@@ -48,11 +33,11 @@ root, fbase, fname, fparent, project
 files can be relative to project root, will be expanded later
 "
   (declare (indent defun))
-  (let ((funcname (related-files--gensym "related-files" proj-type))
+  (let ((funcname (gensym! "related-files" proj-type))
         )
     `(fset (function ,funcname)
       (lambda (path)
-        ,(format related-files-doc-str)
+        ,(format macro-tools--related-doc-str)
         (interactive "b")
         (let* ((path (if (bufferp path) (buffer-file-name path) path))
                (root (projectile-project-root))
@@ -60,7 +45,7 @@ files can be relative to project root, will be expanded later
                (fname   (f-filename path))
                (fparent (f-parent path))
                (fparent2 (f-parent fparent))
-               (project  (related-files--proj-detail! 'project-file))
+               (project  (macro-tools--related-proj-detail 'project-file))
 
                ,@binds
 
@@ -93,4 +78,4 @@ files can be relative to project root, will be expanded later
     )
 )
 
-(provide 'related-files)
+(provide 'macro-tools--related)
