@@ -50,7 +50,7 @@ If the OBJ's `key' is currently unreachable, then apply the face
 (defun transient-mode-fmt (name mode key)
   (format "%s%s : %s"
           (make-string (max 0 (- 3 (length key))) 32)
-          (fmt-as-bool! (when (boundp mode) (symbol-value mode)))
+          (fmt-as-bool! (when (and (symbolp mode) (boundp mode)) (symbol-value mode)))
           name
           )
   )
