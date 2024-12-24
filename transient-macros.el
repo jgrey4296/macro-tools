@@ -7,8 +7,11 @@
 
   (declare-function pop-plist-from-body! "jg-misc-macros")
   (declare-function eieio-make-class-predicate "eieio-core")
-
   )
+
+(require 'transient)
+(cl-assert (featurep 'transient) "transient is needed")
+(cl-assert (fboundp 'transient-prefix) "transient prefix is needed")
 
 (defvar transient-quit!
   [
@@ -225,32 +228,107 @@ with a string or format call, which executes the body
   " Make prefix subgroup bound to const `name`, as the triple (keybind descr prefix-call),
 which can then be included in other transient-prefixes as just `name`
 with text properties to mark it so
-'
+
+auto-wraps the body in a vector and adds the description
  "
   (declare (indent defun))
-  (let ((prefix (gensym))
-        (docfn (gensym))
-        (doc (pcase (or desc (symbol-name name))
-               ((and str (pred stringp))
-                (put-text-property 0 (length str) 'face 'transient-heading str)
-                str)
-               ((and fn (pred functionp))
-                `(let ((result (funcall ,fn)))
-                   (put-text-property 0 (length result) 'face 'transient-heading result)
-                   result
-                   ))
-               ))
+  (let ((prefix-name (gensym! 'transient-macros-  name))
+        (descfn-name (gensym! 'transient-macros- name 'docfn))
+        (source (macroexp-file-name))
+        (desc-result (pcase (upfun! (or desc (symbol-name name)))
+                       ((and str (pred stringp))
+                        (put-text-property 0 (length str) 'face 'transient-heading str)
+                        str)
+                       ((and fn (pred functionp))
+                        `(let ((result (funcall (function ,fn))))
+                           (put-text-property 0 (length result) 'face 'transient-heading result)
+                           result
+                           ))
+                       ))
         (clean-body (pop-plist-from-body! body))
         )
+    (put descfn-name 'source source)
+    (put prefix-name 'source source)
     `(progn
-       (transient-define-prefix ,prefix ()
+       ;; As Value for use in the triple
+       (set (quote ,descfn-name) (lambda nil (interactive) "Generated doc fn for transient" ,desc-result))
+       ;; As Fun for use in group :description
+       (fset (quote ,descfn-name) ,descfn-name)
+       (transient-define-prefix ,prefix-name ()
          ,docstring
-         ,@clean-body
+         [:description ,descfn-name
+          ,@clean-body
+          ]
          transient-quit!
          )
-       (defun ,docfn nil ,doc)
-       (defconst ,name (list ,key (quote ,docfn) (quote ,prefix)))
+       (defconst ,name
+         (list
+          ,key
+          (quote ,prefix-name)
+          :description ,descfn-name
+          )
+         )
        (quote ,name)
+       )
+    )
+  )
+
+;;;###autoload (autoload transient-guarded-insert! "transient-macros" nil nil t)
+(cl-defmacro transient-guarded-insert! (prefix suffix (&rest loc) &key (col-len 4))
+  "Insert a suffix into prefix, but in a new column if necessary"
+  (declare (indent defun))
+  (let* ((loc-end (concatenate 'list loc '(-1)))
+         (guard-patt `(guard (< (length 'x) ,col-len)))
+         (new-row `(transient-append-suffix ,prefix (quote ,loc-end) ,suffix))
+         (new-col `(transient-append-suffix ,prefix (quote ,loc) `[ ,,suffix ] ))
+         )
+    ;; manually construct the backquote list,
+    ;; better controlling pcase patterns
+    (backquote-list* 'pcase
+                     `(transient-get-suffix ,prefix (quote ,loc))
+                     (list
+                      (list (list 'and (list '\` [1 transient-column nil ,x])
+                                  (list 'guard '(not (null x)))
+                                  (list 'guard '(< (length x) 4)))
+                            new-row
+                            ''new-row
+                            )
+                      `(_ ,new-col 'new-col)
+                      )
+                     )
+    )
+  )
+
+
+;;;###autoload (autoload transient-guarded-insert! "transient-macros" nil nil t)
+(cl-defmacro transient-setup-hook! (name () &optional docstr &rest body)
+  "Create a function to trigger rebuilding of a transient,
+also calling any registered addition hooks.
+
+ie: (progn (build-base-transient) (run-hooks 'base-transient-addition-hook))
+"
+  (declare (indent defun))
+  (let* ((builder-fn-sym (gensym! name "builder"))
+         (hook-sym (gensym! name "hook"))
+         (hookdoc (format "Hook for functions which modify %s, run when %s is called" name builder-fn-sym))
+         (docstring (if (stringp docstr)
+                        docstr
+                      (push docstr body)
+                      (format "Macro Generated %s transient builder" name)))
+         )
+    `(progn
+       (defvar ,hook-sym nil ,hookdoc)
+       (defun ,builder-fn-sym (&optional arg)
+         ,docstring
+         (interactive "P")
+         (message "-- Building Base %s" (quote ,name))
+         ,@body
+         (unless arg
+           (message "-- Running %s Extension hooks" (quote ,name))
+           (run-hooks (quote ,hook-sym))
+           )
+         (message "-- Finished %s" (quote ,name))
+         )
        )
     )
   )
