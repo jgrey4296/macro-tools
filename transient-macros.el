@@ -273,11 +273,11 @@ auto-wraps the body in a vector and adds the description
     )
   )
 
-;;;###autoload (autoload transient-guarded-insert! "transient-macros" nil nil t)
+;;;###autoload (autoload 'transient-guarded-insert! "transient-macros" nil nil t)
 (cl-defmacro transient-guarded-insert! (prefix suffix (&rest loc) &key (col-len 4))
   "Insert a suffix into prefix, but in a new column if necessary"
   (declare (indent defun))
-  (let* ((loc-end (concatenate 'list loc '(-1)))
+  (let* ((loc-end (cl-concatenate 'list loc '(-1)))
          (guard-patt `(guard (< (length 'x) ,col-len)))
          (new-row `(transient-append-suffix ,prefix (quote ,loc-end) ,suffix))
          (new-col `(transient-append-suffix ,prefix (quote ,loc) `[ ,,suffix ] ))
@@ -300,7 +300,7 @@ auto-wraps the body in a vector and adds the description
   )
 
 
-;;;###autoload (autoload transient-guarded-insert! "transient-macros" nil nil t)
+;;;###autoload (autoload 'transient-setup-hook! "transient-macros" nil nil t)
 (cl-defmacro transient-setup-hook! (name () &optional docstr &rest body)
   "Create a function to trigger rebuilding of a transient,
 also calling any registered addition hooks.
