@@ -104,14 +104,14 @@ eg: blah -> blah-hook
           )
   )
 
-(defmacro file! ()
+(defun mt-file! ()
   "Return the file of the file this macro was called. orig from doom."
-  '(or (macroexp-file-name) load-file-name buffer-file-name)
+  (or (macroexp-file-name) load-file-name buffer-file-name)
 )
 
-(defmacro dir! ()
+(defun mt-dir! ()
   "Return the directory of the file this macro was called. orig from doom."
-  '(file-name-directory (file!))
+  (file-name-directory (mt-file!))
   )
 
 (provide 'macro-tools--util)
