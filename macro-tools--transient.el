@@ -224,7 +224,7 @@ with a string or format call, which executes the body
 
 ;;;###autoload (defalias 'transient-make-subgroup! 'transient-subgroup!)
 ;;;###autoload (autoload 'transient-subgroup! "transient-macros" nil nil t)
-(cl-defmacro transient-subgroup! (name () docstring &body body &key key (desc nil) &allow-other-keys)
+(cl-defmacro transient-subgroup! (name () docstring &body body &key key (desc nil) nowrap &allow-other-keys)
   " Make prefix subgroup bound to const `name`, as the triple (keybind descr prefix-call),
 which can then be included in other transient-prefixes as just `name`
 with text properties to mark it so
@@ -232,21 +232,26 @@ with text properties to mark it so
 auto-wraps the body in a vector and adds the description
  "
   (declare (indent defun))
-  (let ((prefix-name (gensym! 'transient-macros-  name))
-        (descfn-name (gensym! 'transient-macros- name 'docfn))
-        (source (macroexp-file-name))
-        (desc-result (pcase (upfun! (or desc (symbol-name name)))
-                       ((and str (pred stringp))
-                        (put-text-property 0 (length str) 'face 'transient-heading str)
-                        str)
-                       ((and fn (pred functionp))
-                        `(let ((result (funcall (function ,fn))))
-                           (put-text-property 0 (length result) 'face 'transient-heading result)
-                           result
-                           ))
-                       ))
-        (clean-body (pop-plist-from-body! body))
-        )
+  (let* ((prefix-name (gensym! 'transient-macros-  name))
+         (descfn-name (gensym! 'transient-macros- name 'docfn))
+         (source (macroexp-file-name))
+         (desc-result (pcase (upfun! (or desc (symbol-name name)))
+                        ((and str (pred stringp))
+                         (put-text-property 0 (length str) 'face 'transient-heading str)
+                         str)
+                        ((and fn (pred functionp))
+                         `(let ((result (funcall (function ,fn))))
+                            (put-text-property 0 (length result) 'face 'transient-heading result)
+                            result
+                            ))
+                        ))
+         (clean-body (pop-plist-from-body! body))
+         (wrapped-body (if nowrap
+                           clean-body
+                         (list `[:description ,descfn-name
+                                 ,@clean-body
+                                 ])))
+         )
     (put descfn-name 'source source)
     (put prefix-name 'source source)
     `(progn
@@ -256,9 +261,7 @@ auto-wraps the body in a vector and adds the description
        (fset (quote ,descfn-name) ,descfn-name)
        (transient-define-prefix ,prefix-name ()
          ,docstring
-         [:description ,descfn-name
-          ,@clean-body
-          ]
+         ,@wrapped-body
          macro-tools--transient-quit!
          )
        (defconst ,name
