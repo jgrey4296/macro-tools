@@ -224,16 +224,20 @@ with a string or format call, which executes the body
 
 ;;;###autoload (defalias 'transient-make-subgroup! 'transient-subgroup!)
 ;;;###autoload (autoload 'transient-subgroup! "transient-macros" nil nil t)
-(cl-defmacro transient-subgroup! (name () docstring &body body &key key (desc nil) nowrap &allow-other-keys)
+(cl-defmacro transient-subgroup! (name () docstring &body body &key key (desc nil) rows &allow-other-keys)
   " Make prefix subgroup bound to const `name`, as the triple (keybind descr prefix-call),
 which can then be included in other transient-prefixes as just `name`
 with text properties to mark it so
 
-auto-wraps the body in a vector and adds the description
+auto-wraps the body if rows is nil, ie: each provided vector is a column
+
+
+TODO: kwd based row and column assembly
+ie: :row [:col [] :col [] :col []] :row []
  "
   (declare (indent defun))
-  (let* ((prefix-name (gensym! 'transient-macros-  name))
-         (descfn-name (gensym! 'transient-macros- name 'docfn))
+  (let* ((prefix-name (gensym! name 'body))
+         (descfn-name (gensym! name 'descfn))
          (source (macroexp-file-name))
          (desc-result (pcase (upfun! (or desc (symbol-name name)))
                         ((and str (pred stringp))
@@ -246,7 +250,7 @@ auto-wraps the body in a vector and adds the description
                             ))
                         ))
          (clean-body (pop-plist-from-body! body))
-         (wrapped-body (if nowrap
+         (wrapped-body (if rows
                            clean-body
                          (list `[:description ,descfn-name
                                  ,@clean-body
@@ -256,7 +260,7 @@ auto-wraps the body in a vector and adds the description
     (put prefix-name 'source source)
     `(progn
        ;; As Value for use in the triple
-       (set (quote ,descfn-name) (lambda nil (interactive) "Generated doc fn for transient" ,desc-result))
+       (set (quote ,descfn-name) (lambda nil (interactive) "Generated desc fn for transient" ,desc-result))
        ;; As Fun for use in group :description
        (fset (quote ,descfn-name) ,descfn-name)
        (transient-define-prefix ,prefix-name ()
