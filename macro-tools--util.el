@@ -54,12 +54,17 @@
   )
 
 ;;;###autoload
-(defun pop-plist-from-body! (body)
+(defun pop-plist-from-body! (body &optional exceptions)
   "macros with &key and &rest include the keys in the body,
   (and need &allow-other-keys.
          This strips the kwds and their values off from the body
          "
-  (while (and body (listp body) (keywordp (car body))) (pop body) (pop body))
+  (while (and body
+              (listp body)
+              (keywordp (car body))
+              (not (-contains-p exceptions (car body)))
+              )
+    (pop body) (pop body))
   body
   )
 
