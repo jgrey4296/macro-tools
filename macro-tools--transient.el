@@ -282,7 +282,7 @@ ie: :row [:col [] :col [] :col []] :row []
 
 ;;;###autoload (autoload 'transient-guarded-insert! "transient-macros" nil nil t)
 (cl-defmacro transient-guarded-insert! (prefix suffix (&rest loc) &key (col-len 4))
-  "Insert a suffix into prefix, but in a new column if necessary"
+  "Insert a subgroup into prefix, but in a new column if necessary"
   (declare (indent defun))
   (let* ((loc-end (cl-concatenate 'list loc '(-1)))
          (guard-patt `(guard (< (length 'x) ,col-len)))
@@ -293,19 +293,59 @@ ie: :row [:col [] :col [] :col []] :row []
     ;; better controlling pcase patterns
     (backquote-list* 'pcase
                      `(transient-get-suffix ,prefix (quote ,loc))
-                     (list
-                      (list (list 'and (list '\` [1 transient-column nil ,x])
-                                  (list 'guard '(not (null x)))
-                                  (list 'guard '(< (length x) 4)))
-                            new-row
-                            ''new-row
-                            )
+                     (list ;; patterns
+                      (list ;; pattern 1
+                       (list 'and (list '\` [1 transient-column nil ,x])
+                             (list 'guard '(not (null x)))
+                             (list 'guard '(< (length x) 4)))
+                       ;; p1 result
+                       new-row
+                       ''new-row
+                       )
+                      ;; p2
                       `(_ ,new-col 'new-col)
                       )
                      )
     )
   )
 
+;;;###autoload (autoload 'transient-guarded-append! "transient-macros" nil nil t)
+(cl-defmacro transient-guarded-append! (prefix (&rest loc) suffix &key (col-len 3))
+  "Insert a single suffix into a subgroup"
+  (declare (indent defun))
+  (let* ((loc-end (cl-concatenate 'list loc '(-1)))
+         (target (if (consp suffix)
+                     (cadr suffix)
+                   suffix))
+         (guard-patt `(guard (< (length 'x) ,col-len)))
+         (new-row `(transient-append-suffix (cadr ,prefix) (quote ,loc-end) (quote (,target))))
+         (new-col (backquote-list* 'transient-append-suffix
+                                   `(cadr ,prefix)
+                                   (list
+                                   `(quote ,loc)
+                                   `[(,target)]
+                                   )
+                                   ))
+         )
+
+    (backquote-list* 'pcase
+                     `(transient-get-suffix (cadr ,prefix) (quote ,loc))
+                     (list ;; patterns
+                      (list ;; p1
+                       (list 'and (list '\` [1 transient-column nil ,x])
+                             (list 'guard '(not (null x)))
+                             (list 'guard '(< (length x) 4)))
+
+                       ;; result
+                       new-row
+                       ''new-row
+                       )
+                      ;; fallback
+                      `(_ ,new-col 'new-col)
+                      )
+       )
+    )
+  )
 
 ;;;###autoload (autoload 'transient-setup-hook! "transient-macros" nil nil t)
 (cl-defmacro transient-setup-hook! (name () &optional docstr &rest body)
