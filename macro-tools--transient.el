@@ -22,6 +22,7 @@
    ]
   " Reusable simple quit for transients "
   )
+(defvar macro-tools--transient-hooks nil "transient hook store, to create a one stop shop of hooks")
 
 (defclass macro-tools--transient-group (transient-prefix)
   ((description :initarg :description :initform nil))
@@ -159,15 +160,19 @@ If the OBJ's `key' is currently unreachable, then apply the face
 )
 
 ;;;###autoload (autoload 'transient-toggle-hook! "transient-macros" nil nil t)
-(cl-defmacro transient-toggle-hook! (name () docstr &key desc key hook fn)
+(cl-defmacro transient-toggle-hook! (name () docstr &key desc key hook fn global)
   "Make a transient toggle to add/remove `fn' to/from `hook'"
   (declare (indent defun))
   (let* ((fullname (intern (format "transient-macro-toggle-hook-%s" name)))
-         (hook-target (ensure-hook! (unquote! hook)))
+         (hook-targets (ensure-hook! (unquote! hook) :plural t))
          (desc-fn `(lambda () (transient-hook-fmt ,(or desc docstr (symbol-name name))
-                                                  ,hook-target
+                                                  (eval (car (list ,@hook-targets)))
                                                   ,fn
                                                   ,key)))
+         (globalhook (when global (gensym! 'transient-global-hook-add fullname)))
+         (xsym (gensym))
+         (ysym (gensym))
+         (presym (gensym))
          )
     `(progn
        (transient-define-suffix ,fullname (arg)
@@ -178,16 +183,27 @@ If the OBJ's `key' is currently unreachable, then apply the face
          (interactive "P")
          (if arg
              (funcall ,fn 'toggle)
-           (if (not (-contains? ,hook-target ,fn))
-               (add-hook (quote ,hook-target) ,fn)
-             (remove-hook (quote ,hook-target) ,fn)
-             (funcall ,fn -1))
+           (cl-loop for x in (list ,@hook-targets)
+                    if (-contains? (eval x) ,fn)
+                    do (remove-hook x ,fn)
+                    and do (funcall ,fn -1)
+                    else
+                    do (add-hook x ,fn)
+                    )
            )
          )
+       ,(when global
+           `(progn
+              (defun ,globalhook (,presym ,xsym ,ysym)
+                (transient-guarded-append! ,presym (quote ,fullname) (,xsym ,ysym))
+                )
+              (add-hook 'macro-tools--transient-hooks (function ,globalhook))
+              )
+           )
        (quote ,fullname)
        )
     )
-)
+  )
 
 ;;;###autoload (defalias 'transient-make-call! 'transient-call!)
 ;;;###autoload (autoload 'transient-call! "transient-macros" nil nil t)
@@ -285,7 +301,6 @@ ie: :row [:col [] :col [] :col []] :row []
   "Insert a subgroup into prefix, but in a new column if necessary"
   (declare (indent defun))
   (let* ((loc-end (cl-concatenate 'list loc '(-1)))
-         (guard-patt `(guard (< (length 'x) ,col-len)))
          (new-row `(transient-append-suffix ,prefix (quote ,loc-end) ,suffix))
          (new-col `(transient-append-suffix ,prefix (quote ,loc) `[ ,,suffix ] ))
          )
@@ -295,7 +310,8 @@ ie: :row [:col [] :col [] :col []] :row []
                      `(transient-get-suffix ,prefix (quote ,loc))
                      (list ;; patterns
                       (list ;; pattern 1
-                       (list 'and (list '\` [1 transient-column nil ,x])
+                       (list 'and
+                             (list '\` [1 transient-column nil ,x])
                              (list 'guard '(not (null x)))
                              (list 'guard '(< (length x) 4)))
                        ;; p1 result
@@ -310,38 +326,44 @@ ie: :row [:col [] :col [] :col []] :row []
   )
 
 ;;;###autoload (autoload 'transient-guarded-append! "transient-macros" nil nil t)
-(cl-defmacro transient-guarded-append! (prefix (&rest loc) suffix &key (col-len 3))
+(cl-defmacro transient-guarded-append! (prefix suffix (&rest loc) &key (col-len 3))
   "Insert a single suffix into a subgroup"
   (declare (indent defun))
-  (let* ((loc-end (cl-concatenate 'list loc '(-1)))
-         (target (if (consp suffix)
-                     (cadr suffix)
-                   suffix))
-         (guard-patt `(guard (< (length 'x) ,col-len)))
-         (new-row `(transient-append-suffix (cadr ,prefix) (quote ,loc-end) (quote (,target))))
+  (let* ((loc-list (cl-concatenate 'list loc))
+         (loc-end (cl-concatenate 'list loc-list '(-1)))
+         (target (pcase suffix
+                   ((pred consp)
+                    (cadr suffix))
+                   (_ suffix)))
+         (new-row `(transient-append-suffix (cadr ,prefix) (mapcar #'eval (list ,@loc-end)) (quote (,target))))
          (new-col (backquote-list* 'transient-append-suffix
                                    `(cadr ,prefix)
                                    (list
-                                   `(quote ,loc)
+                                    `(mapcar #'eval (list ,@loc-list))
                                    `[(,target)]
                                    )
                                    ))
          )
 
     (backquote-list* 'pcase
-                     `(transient-get-suffix (cadr ,prefix) (quote ,loc))
+                     `(transient-get-suffix (cadr ,prefix) (mapcar #'eval (list ,@loc-list)))
                      (list ;; patterns
                       (list ;; p1
-                       (list 'and (list '\` [1 transient-column nil ,x])
-                             (list 'guard '(not (null x)))
-                             (list 'guard '(< (length x) 4)))
+                       (list 'and
+                             (list '\` [1 transient-column nil ,xsym])
+                             t
+                             (list 'guard `(not (null xsym)))
+                             (list 'guard `(< (length xsym) 4))
+                             )
 
                        ;; result
                        new-row
                        ''new-row
                        )
                       ;; fallback
-                      `(_ ,new-col 'new-col)
+                      `(_
+                        ,new-col
+                        'new-col)
                       )
        )
     )

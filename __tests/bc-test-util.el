@@ -1,4 +1,5 @@
-;;; test-misc.el -*- lexical-binding: t; no-byte-compile: t; -*-
+;;; test-util.el -*- mode: elisp; lexical-binding: t; no-byte-compile: t; -*-
+
 ;;-- Header
 ;; File Commentary:
 ;;
@@ -81,7 +82,7 @@
 (describe "ensure-hook tests"
   (it "is a sanity test" (expect t :to-be (not nil)))
   (it "should return hooks unchanged"
-    (expect (ensure-hook! 'lsp-mode-hook) :to-be 'lsp-mode-hook)
+    (expect (ensure-hook! 'lsp-mode-hook) :to-equal  'lsp-mode-hook)
     )
   (it "should return hook-symbols otherwise"
     (expect (ensure-hook! 'blah)              :to-be 'blah-hook)
@@ -91,6 +92,14 @@
     (expect (ensure-hook! 'blah-mode)         :to-be 'blah-mode-hook)
     (expect (ensure-hook! (quote blah-mode))  :to-be 'blah-mode-hook)
     )
+
+  (it "should handle plural key lists"
+      (expect (ensure-hook! 'blah-mode :plural t) :to-equal (list ''blah-mode-hook))
+      (expect (ensure-hook! '(blah-mode) :plural t) :to-equal (list ''blah-mode-hook))
+      (expect (ensure-hook! '(blah-mode bloo-mode) :plural t) :to-equal (list ''blah-mode-hook ''bloo-mode-hook))
+      (expect (ensure-hook! '(blah-mode bloo) :plural t) :to-equal (list ''blah-mode-hook ''bloo-hook))
+
+      )
 )
 
 ;;-- Footer

@@ -69,18 +69,25 @@
   )
 
 ;;;###autoload
-(defun ensure-hook! (sym)
+(cl-defun ensure-hook! (sym &key plural)
   "Give a symbol, get a hook name
 eg: blah -> blah-hook
 ... blah-mode -> blah-mode-hook
 ... blah-mode-hook -> blah-mode-hook
+
+if `plural', then treat it as a list of hooks
 "
-  (let ((symstr (symbol-name (unquote! sym))))
-    (if (s-suffix? "-hook" symstr)
-        sym
-      (intern (format "%s-hook" symstr)))
+  (if plural
+      (cl-loop for x in (ensure-list sym)
+                            collect
+                            (macroexp-quote (ensure-hook! x)))
+    (let ((symstr (symbol-name (unquote! sym))))
+      (if (s-suffix? "-hook" symstr)
+          sym
+        (intern (format "%s-hook" symstr)))
       )
     )
+  )
 
 ;;;###autoload
 (defun gensym! (&rest names)
