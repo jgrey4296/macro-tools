@@ -6,7 +6,7 @@
 ;;
 ;;-- end Header
 
-(defun process-sentinel! (target proc status)
+(defun macro-tools--process-sentinel (target proc status)
   (unless (process-live-p proc)
      (let ((text (with-current-buffer (process-buffer proc)
                    (buffer-string))))
@@ -17,14 +17,16 @@
                             (insert (format "\n--- End Proc: %s.\n" (process-name proc)))
                             )
        )
-     ;; (with-current-buffer (process-buffer proc)
-     ;;   (erase-buffer))
      (kill-buffer (process-buffer proc))
      )
   )
 
-(defmacro with-process-wrap! (buffer &rest body)
-  "A Macro for setting up a process with a sentinel"
+(defmacro with-process-wrap! (buffer sentinel &rest body)
+  "A Macro for wrapping a sentinel around N similar processes
+Give it a buffer and a sentinel symbol of the form:
+(lambda (target proc status))
+which will be partial'd with the buffer name
+"
   (let ((procs (make-symbol "tempprocs"))
         (sent (make-symbol "sentinel"))
         )
@@ -32,7 +34,7 @@
        (with-current-buffer (get-buffer-create ,buffer)
          (erase-buffer))
        (let ((,procs ,@body)
-             (,sent (-partial #'jg-process-sentinel! ,buffer))
+             (,sent (-partial ,sentinel ,buffer))
              )
          (cond ((listp ,procs)
                 (message "Applying sentinel to processes %s" ,procs)
