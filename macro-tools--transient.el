@@ -182,7 +182,6 @@ If the OBJ's `key' is currently unreachable, then apply the face
          ,@(when key (list :key key))
          (interactive "P")
          (if arg
-             (funcall ,fn 'toggle)
            (cl-loop for x in (list ,@hook-targets)
                     if (-contains? (eval x) ,fn)
                     do (remove-hook x ,fn)
@@ -190,6 +189,7 @@ If the OBJ's `key' is currently unreachable, then apply the face
                     else
                     do (add-hook x ,fn)
                     )
+           (funcall ,fn 'toggle)
            )
          )
        ,(when global
