@@ -184,10 +184,11 @@ If the OBJ's `key' is currently unreachable, then apply the face
          (if arg
            (cl-loop for x in (list ,@hook-targets)
                     if (-contains? (eval x) ,fn)
-                    do (remove-hook x ,fn)
-                    and do (funcall ,fn -1)
+                    do (progn (remove-hook x ,fn)
+                              (funcall ,fn -1))
                     else
-                    do (add-hook x ,fn)
+                    do (progn (message "Adding to %s : %s" x ,fn)
+                              (add-hook x ,fn))
                     )
            (funcall ,fn 'toggle)
            )
