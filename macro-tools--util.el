@@ -105,7 +105,7 @@ if `plural', then treat it as a list of hooks
                                             (symbol-name x))
                                            ((stringp x)
                                             x)
-                                           (t nil)
+                                           (_ nil)
                                            )
                                 )
                             names

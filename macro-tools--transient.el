@@ -328,7 +328,9 @@ ie: :row [:col [] :col [] :col []] :row []
 
 ;;;###autoload (autoload 'transient-guarded-append! "transient-macros" nil nil t)
 (cl-defmacro transient-guarded-append! (prefix suffix (&rest loc) &key (col-len 3))
-  "Insert a single suffix into a subgroup"
+  "Insert a single suffix into a subgroup "
+  ;; Note: I build the pcase manually to control the quoting,
+  ;; this allows the built pcase to interact better with transient-get-suffix
   (declare (indent defun))
   (let* ((loc-list (cl-concatenate 'list loc))
          (loc-end (cl-concatenate 'list loc-list '(-1)))
