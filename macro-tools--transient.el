@@ -22,6 +22,7 @@
    ]
   " Reusable simple quit for transients "
   )
+
 (defvar macro-tools--transient-hooks nil "transient hook store, to create a one stop shop of hooks")
 
 (defclass macro-tools--transient-group (transient-prefix)
@@ -248,7 +249,6 @@ with text properties to mark it so
 
 auto-wraps the body if rows is nil, ie: each provided vector is a column
 
-
 TODO: kwd based row and column assembly
 ie: :row [:col [] :col [] :col []] :row []
  "
@@ -312,7 +312,7 @@ ie: :row [:col [] :col [] :col []] :row []
                      (list ;; patterns
                       (list ;; pattern 1
                        (list 'and
-                             (list '\` [1 transient-column nil ,x])
+                             (list '\` [nil transient-column nil ,x])
                              (list 'guard '(not (null x)))
                              (list 'guard '(< (length x) 4)))
                        ;; p1 result
@@ -353,7 +353,7 @@ ie: :row [:col [] :col [] :col []] :row []
                      (list ;; patterns
                       (list ;; p1
                        (list 'and
-                             (list '\` [1 transient-column nil ,xsym])
+                             (list '\` [nil transient-column nil ,xsym])
                              t
                              (list 'guard `(not (null xsym)))
                              (list 'guard `(< (length xsym) 4))
