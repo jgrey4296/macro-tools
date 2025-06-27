@@ -302,7 +302,7 @@ ie: :row [:col [] :col [] :col []] :row []
   "Insert a subgroup into prefix, but in a new column if necessary"
   (declare (indent defun))
   (let* ((loc-end (cl-concatenate 'list loc '(-1)))
-         (new-row `(transient-append-suffix ,prefix (quote ,loc-end) ,suffix))
+         (new-row `(transient-append-suffix ,prefix (quote ,loc-end) (quote ,suffix)))
          (new-col `(transient-append-suffix ,prefix (quote ,loc) `[ ,,suffix ] ))
          )
     ;; manually construct the backquote list,
@@ -312,7 +312,7 @@ ie: :row [:col [] :col [] :col []] :row []
                      (list ;; patterns
                       (list ;; pattern 1
                        (list 'and
-                             (list '\` [nil transient-column nil ,x])
+                             (list '\` [transient-column nil ,x])
                              (list 'guard '(not (null x)))
                              (list 'guard '(< (length x) 4)))
                        ;; p1 result
@@ -325,7 +325,6 @@ ie: :row [:col [] :col [] :col []] :row []
                      )
     )
   )
-
 ;;;###autoload (autoload 'transient-guarded-append! "transient-macros" nil nil t)
 (cl-defmacro transient-guarded-append! (prefix suffix (&rest loc) &key (col-len 3))
   "Insert a single suffix into a subgroup "
