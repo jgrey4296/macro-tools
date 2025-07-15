@@ -335,30 +335,31 @@ ie: :row [:col [] :col [] :col []] :row []
   ;; this allows the built pcase to interact better with transient-get-suffix
   (declare (indent defun))
   (let* ((loc-list (cl-concatenate 'list loc))
-         (target (pcase suffix
-                   ((pred consp)
-                    (cadr suffix))
-                   (_ suffix)))
+         (target `(pcase ,suffix
+                   ((and x (pred consp)) (cadr x))
+                   (x x)))
+         (pre-target `(pcase ,prefix
+                       ((and x (pred consp)) (cadr x))
+                       (x x)))
          )
 
     (backquote-list* 'pcase
-                     `(transient-get-suffix (cadr ,prefix) (quote ,loc))
+                     `(transient-get-suffix ,pre-target (quote ,loc))
                      (list ;; patterns
                       (list ;; p1
                        (list 'and
                              (list '\` [transient-column nil ,xsym])
-                             t
                              (list 'guard `(not (null xsym)))
                              (list 'guard `(< (length xsym) 4))
                              )
 
                        ;; result
-                        `(macro-tools--new-row ,prefix (quote ,loc) ,target)
+                        `(macro-tools--new-row ,pre-target (quote ,loc) ,target)
                        ''new-row
                        )
                       ;; fallback
                       `(_
-                        (macro-tools--new-column ,prefix (quote ,loc) ,target)
+                        (macro-tools--new-column ,pre-target (quote ,loc) ,target)
                         'new-col)
                       )
        )
@@ -401,7 +402,7 @@ ie: (progn (build-base-transient) (run-hooks 'base-transient-addition-hook))
 (defun macro-tools--new-column (prefix loc suffix)
   "Util for adding a new column from guarded-append"
   (transient-append-suffix
-    (cadr prefix)
+    prefix
     loc
     `[(,suffix)]
     t
@@ -411,7 +412,7 @@ ie: (progn (build-base-transient) (run-hooks 'base-transient-addition-hook))
 (defun macro-tools--new-row (prefix loc suffix)
   "util for adding a new row from guarded-append"
   (transient-append-suffix
-    (cadr prefix)
+    prefix
     (append loc '(-1))
     (list
      (oref (get suffix 'transient--suffix) key)
