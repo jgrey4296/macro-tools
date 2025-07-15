@@ -196,10 +196,7 @@ If the OBJ's `key' is currently unreachable, then apply the face
          )
        ,(when global
            `(progn
-              (defun ,globalhook (,presym ,xsym ,ysym)
-                (transient-guarded-append! ,presym (quote ,fullname) (,xsym ,ysym))
-                )
-              (add-hook 'macro-tools--transient-hooks (function ,globalhook))
+              (add-hook 'macro-tools--transient-hooks (quote ,fullname))
               )
            )
        (quote ,fullname)
@@ -298,12 +295,16 @@ ie: :row [:col [] :col [] :col []] :row []
   )
 
 ;;;###autoload (autoload 'transient-guarded-insert! "transient-macros" nil nil t)
-(cl-defmacro transient-guarded-insert! (prefix suffix (&rest loc) &key (col-len 4))
-  "Insert a subgroup into prefix, but in a new column if necessary"
+(cl-defmacro transient-guarded-insert-subgroup! (prefix suffix (&rest loc) &key (col-len 4))
+  "Insert a subgroup-triple into prefix, but in a new column if necessary"
   (declare (indent defun))
   (let* ((loc-end (cl-concatenate 'list loc '(-1)))
          (new-row `(transient-append-suffix ,prefix (quote ,loc-end) (quote ,suffix)))
          (new-col `(transient-append-suffix ,prefix (quote ,loc) `[ ,,suffix ] ))
+         (target (pcase suffix
+                   ((pred consp)
+                    (cadr suffix))
+                   (_ suffix)))
          )
     ;; manually construct the backquote list,
     ;; better controlling pcase patterns
@@ -320,51 +321,44 @@ ie: :row [:col [] :col [] :col []] :row []
                        ''new-row
                        )
                       ;; p2
-                      `(_ ,new-col 'new-col)
+                      `(_
+                        ,new-col
+                        'new-col)
                       )
                      )
     )
   )
 ;;;###autoload (autoload 'transient-guarded-append! "transient-macros" nil nil t)
-(cl-defmacro transient-guarded-append! (prefix suffix (&rest loc) &key (col-len 3))
+(cl-defmacro transient-guarded-append! (prefix suffix (&rest loc) &key (col-len 4))
   "Insert a single suffix into a subgroup "
   ;; Note: I build the pcase manually to control the quoting,
   ;; this allows the built pcase to interact better with transient-get-suffix
   (declare (indent defun))
   (let* ((loc-list (cl-concatenate 'list loc))
-         (loc-end (cl-concatenate 'list loc-list '(-1)))
          (target (pcase suffix
                    ((pred consp)
                     (cadr suffix))
                    (_ suffix)))
-         (new-row `(transient-append-suffix (cadr ,prefix) (mapcar #'eval (list ,@loc-end)) (quote (,target))))
-         (new-col (backquote-list* 'transient-append-suffix
-                                   `(cadr ,prefix)
-                                   (list
-                                    `(mapcar #'eval (list ,@loc-list))
-                                   `[(,target)]
-                                   )
-                                   ))
          )
 
     (backquote-list* 'pcase
-                     `(transient-get-suffix (cadr ,prefix) (mapcar #'eval (list ,@loc-list)))
+                     `(transient-get-suffix (cadr ,prefix) (quote ,loc))
                      (list ;; patterns
                       (list ;; p1
                        (list 'and
-                             (list '\` [nil transient-column nil ,xsym])
+                             (list '\` [transient-column nil ,xsym])
                              t
                              (list 'guard `(not (null xsym)))
                              (list 'guard `(< (length xsym) 4))
                              )
 
                        ;; result
-                       new-row
+                        `(macro-tools--new-row ,prefix (quote ,loc) ,target)
                        ''new-row
                        )
                       ;; fallback
                       `(_
-                        ,new-col
+                        (macro-tools--new-column ,prefix (quote ,loc) ,target)
                         'new-col)
                       )
        )
@@ -401,6 +395,29 @@ ie: (progn (build-base-transient) (run-hooks 'base-transient-addition-hook))
          (message "-- Finished %s" (quote ,name))
          )
        )
+    )
+  )
+
+(defun macro-tools--new-column (prefix loc suffix)
+  "Util for adding a new column from guarded-append"
+  (transient-append-suffix
+    (cadr prefix)
+    loc
+    `[(,suffix)]
+    t
+    )
+  )
+
+(defun macro-tools--new-row (prefix loc suffix)
+  "util for adding a new row from guarded-append"
+  (transient-append-suffix
+    (cadr prefix)
+    (append loc '(-1))
+    (list
+     (oref (get suffix 'transient--suffix) key)
+     suffix
+     )
+    t
     )
   )
 
