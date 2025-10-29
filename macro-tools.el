@@ -6,7 +6,7 @@
 ;; Maintainer: John Grey <johngrey4296@gmail.com>
 ;; URL: https://github.com/jgrey4296/macro-tools
 ;; Version: 1.0.0
-;; Package-Requires: ((emacs "30.2") (transient) (eieio) (f) (s) (dash) (cl-lib))
+;; Package-Requires: ((emacs "30.2") (transient "0.10.1") (eieio "1.4") (f "0.21.0") (s "1.13.1") (dash "2.20.0") (cl-lib "1.0"))
 ;; Keywords:
 
 ;; This file is not part of GNU Emacs.
