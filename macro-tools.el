@@ -1,10 +1,28 @@
-;;; macro-tools.el -*- lexical-binding: t; no-byte-compile: t; -*-
-;;-- Header
-;; File Commentary:
-;;
-;;
-;; See footer for licenses/metadata/notes as applicable
-;;-- end Header
+;;; macro-tools.el --- Utilities for macros -*- lexical-binding: t; no-byte-compile: t; -*-
+
+;; Copyright (C) 2025  John Grey
+
+;; Author: John Grey <johngrey4296@gmail.com>
+;; Maintainer: John Grey <johngrey4296@gmail.com>
+;; URL: https://github.com/jgrey4296/macro-tools
+;; Version: 1.0.0
+;; Package-Requires: ((emacs "30.2") (transient) (eieio) (f) (s) (dash) (cl-lib))
+;; Keywords:
+
+;; This file is not part of GNU Emacs.
+
+;; This program is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 (require 'macro-tools--hydra)
 (require 'macro-tools--related)

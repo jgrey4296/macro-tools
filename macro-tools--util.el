@@ -10,6 +10,7 @@
   (require 'cl-lib)
   (require 's)
   (require 'eieio-core)
+  (require 'dash)
 
   (declare-function eieio-make-clas-predicate "eieio-core")
   )
