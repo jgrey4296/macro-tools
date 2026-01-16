@@ -7,10 +7,9 @@
 (website-url "https://github.com/jgrey4296/macro-tools")
 (keywords )
 
-(package-file "macro-tools.el")
-(files "macro-tools--*.el")
+(package-descriptor "macro-tools-pkg.el")
+(files "./macro-tools.el" "./macro-tools--*.el")
 
-(script "test" "echo \"Error: no test specified\" && exit 1")
 
 (source "gnu")
 (source "melpa")
