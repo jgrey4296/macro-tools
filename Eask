@@ -19,6 +19,4 @@
 (depends-on "cl-lib" "1.0")
 (depends-on "dash" "2.20.0")
 (depends-on "eieio" "1.4")
-(depends-on "f" "0.21.0")
 (depends-on "s" "1.13.1")
-(depends-on "transient" "0.10.1")

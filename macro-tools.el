@@ -24,9 +24,9 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-(require 'macro-tools--hydra)
-(require 'macro-tools--related)
-(require 'macro-tools--transient)
+;; (require 'macro-tools--hydra)
+;; (require 'macro-tools--related)
+;; (require 'macro-tools--transient)
 (require 'macro-tools--util)
 
 (provide 'macro-tools)
